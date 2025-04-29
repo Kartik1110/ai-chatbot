@@ -1,9 +1,9 @@
-import { OpenAI, OpenAIEmbedding } from "@llamaindex/openai";
 import dotenv from "dotenv";
-import { addDocument, queryDocuments } from "./chromadb";
-import { responsePromptTemplate } from "../prompts";
-import { DocumentType, Document } from "../types";
 import { v4 as uuidv4 } from "uuid";
+import { addDocument } from "./chromadb";
+import { DocumentType, Document } from "../types";
+import { responsePromptTemplate } from "../prompts";
+import { OpenAI, OpenAIEmbedding } from "@llamaindex/openai";
 
 dotenv.config();
 
