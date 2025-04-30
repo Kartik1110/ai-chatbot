@@ -1,118 +1,84 @@
 import { Document } from "../types";
-import { generateEmbedding } from "./llamaindex";
-import { ChromaClient, Collection, GetCollectionParams } from "chromadb";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
 
-let client: ChromaClient | null = null;
-let collection: Collection | null = null;
+let vectorStore: Chroma | null = null;
+const COLLECTION_NAME = "yoda_documents";
 
-const getClient = (): ChromaClient => {
-  if (!client) {
-    client = new ChromaClient();
-  }
-  return client;
-};
+const embeddings = new OpenAIEmbeddings({
+  modelName: "text-embedding-3-large",
+});
 
-export const getCollection = (): Collection | null => {
-  return collection;
+export const getVectorStore = (): Chroma | null => {
+  return vectorStore;
 };
 
 export const getCollections = async (): Promise<string[]> => {
-  const chromaClient = getClient();
-  return await chromaClient.listCollections();
+  if (!vectorStore) {
+    throw new Error("Vector store not initialized");
+  }
+  return [COLLECTION_NAME];
 };
 
 export const initialize = async (): Promise<void> => {
-  const chromaClient = getClient();
   try {
-    collection = await chromaClient.createCollection({
-      name: "yoda_documents",
-      metadata: { description: "Collection for Yoda AI Assistant documents" },
+    // Initialize or get existing Chroma instance
+    vectorStore = await Chroma.fromExistingCollection(embeddings, {
+      collectionName: COLLECTION_NAME,
     });
   } catch (error) {
-    // Collection might already exist
-    const params: GetCollectionParams = {
-      name: "yoda_documents",
-      embeddingFunction: {
-        generate: async (texts: string[]): Promise<any> => {
-          try {
-            // Process each text to get its embedding
-            const embeddings = await Promise.all(
-              texts.map(
-                async (text) => await generateEmbedding(text, "document")
-              )
-            );
-
-            return embeddings;
-          } catch (error) {
-            console.error("Error generating embeddings:", error);
-            // Fallback to placeholder embeddings if there's an error
-            return texts.map(() => Array(1536).fill(0));
-          }
+    // If collection doesn't exist, create a new one
+    vectorStore = await Chroma.fromDocuments(
+      [], // Start with empty documents
+      embeddings,
+      {
+        collectionName: COLLECTION_NAME,
+        collectionMetadata: {
+          description: "Collection for Yoda AI Assistant documents",
         },
-      },
-    };
-    collection = await chromaClient.getCollection(params);
+      }
+    );
   }
 };
 
 export const addDocument = async (document: Document): Promise<void> => {
-  const currentCollection = getCollection();
-  if (!currentCollection) {
-    throw new Error("Collection not initialized");
+  if (!vectorStore) {
+    throw new Error("Vector store not initialized");
   }
-  await currentCollection.add({
-    ids: [document.id],
-    embeddings: [document.embedding],
-    metadatas: [
-      {
+
+  await vectorStore.addDocuments([
+    {
+      pageContent: document.content,
+      metadata: {
+        id: document.id,
         title: document.title,
         type: document.type,
         tags: document.tags.join(","),
       },
-    ],
-    documents: [document.content],
-  });
+    },
+  ]);
 };
 
 export const queryDocuments = async (
   queryEmbedding: number[],
   limit = 3
 ): Promise<Document[]> => {
-  const currentCollection = getCollection();
-  if (!currentCollection) {
-    throw new Error("Collection not initialized");
+  if (!vectorStore) {
+    throw new Error("Vector store not initialized");
   }
 
-  if (!Array.isArray(queryEmbedding) || queryEmbedding.length === 0) {
-    throw new Error("Invalid query embedding provided");
-  }
+  // Use the underlying Chroma client to search with raw embeddings
+  const results = await vectorStore.similaritySearchVectorWithScore(
+    queryEmbedding,
+    limit
+  );
 
-  const results = await currentCollection.query({
-    queryEmbeddings: [queryEmbedding],
-    nResults: limit,
-  });
-
-  if (!results.documents?.[0] || !results.ids?.[0] || !results.metadatas?.[0]) {
-    return [];
-  }
-
-  return results.documents[0].map((content, index) => {
-    const metadata = results.metadatas![0][index];
-    const id = results.ids![0][index];
-
-    if (!content || !metadata || !id) {
-      throw new Error("Invalid document data received from ChromaDB");
-    }
-
-    return {
-      id,
-      content,
-      embedding: [],
-      title: String(metadata.title || ""),
-      type: (metadata.type as Document["type"]) || "FAQ",
-      tags: String(metadata.tags || "")
-        .split(",")
-        .filter(Boolean),
-    };
-  });
+  return results.map(([doc, _score]) => ({
+    id: doc.metadata.id || "",
+    content: doc.pageContent,
+    embedding: [], // We don't return embeddings in results
+    title: doc.metadata.title || "",
+    type: doc.metadata.type || "FAQ",
+    tags: (doc.metadata.tags || "").split(",").filter(Boolean),
+  }));
 };
