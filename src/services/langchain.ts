@@ -3,16 +3,16 @@ import { v4 as uuidv4 } from "uuid";
 import { addDocument } from "./chromadb";
 import { DocumentType, Document } from "../types";
 import { responsePromptTemplate } from "../prompts";
-import { OpenAI, OpenAIEmbedding } from "@llamaindex/openai";
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 
 dotenv.config();
 
-const openai = new OpenAI({
+const openai = new ChatOpenAI({
   model: "gpt-4o-mini",
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const embedModel = new OpenAIEmbedding({
+const embedModel = new OpenAIEmbeddings({
   model: "text-embedding-3-large",
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -27,7 +27,7 @@ export const generateEmbedding = async (
     let embedding: any;
     if (type === "document") {
       // const textChunks = text.split("\n\n");
-      embedding = await embedModel.getTextEmbedding(text);
+      embedding = await embedModel.embedQuery(text);
       console.log("Embedding generated:", embedding);
 
       // Create a document with the embedding
@@ -40,7 +40,7 @@ export const generateEmbedding = async (
           tags: ["nse", "faqs"],
         });
     } else {
-      embedding = await embedModel.getTextEmbedding(text);
+      embedding = await embedModel.embedQuery(text);
       console.log("Embedding generated:", embedding);
     }
 
@@ -58,14 +58,15 @@ export const processQuery = async (query: string, documents: Document[]) => {
       .map((doc) => doc.content)
       .join("\n\n")
       .slice(0, 1000);
-    const prompt = responsePromptTemplate.format({
+    const prompt = await responsePromptTemplate.format({
       context,
       query,
     });
-    const completion = await openai.complete({
-      prompt,
-    });
-    const responseText = completion.text || "";
+    const completion = await openai.invoke([{
+      role: "user",
+      content: prompt,
+    }]);
+    const responseText = completion || "";
     // const confidence = calculateConfidence(responseText, documents);
     return {
       answer: responseText,
