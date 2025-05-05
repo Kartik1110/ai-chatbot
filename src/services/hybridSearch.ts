@@ -1,4 +1,4 @@
-import { generateEmbedding } from "./llamaindex";
+import { generateEmbedding } from "./langchain";
 import { Document, SearchResult } from "../types";
 import { calculateBM25Score } from "../utils/bm25";
 import { ChromaClient, Collection, GetCollectionParams } from "chromadb";
