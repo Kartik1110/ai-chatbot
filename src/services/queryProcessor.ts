@@ -1,16 +1,16 @@
 import dotenv from "dotenv";
-import { OpenAI } from "@llamaindex/openai";
+import { ChatOpenAI } from "@langchain/openai";
 import { HybridSearch } from "./hybridSearch";
 import { Document, ProcessedQuery } from "../types";
 
 dotenv.config();
 
 export class QueryProcessor {
-  private openai: OpenAI;
+  private openai: ChatOpenAI;
   private hybridSearch: HybridSearch;
 
   constructor() {
-    this.openai = new OpenAI({
+    this.openai = new ChatOpenAI({
       model: "gpt-4o",
       apiKey: process.env.OPENAI_API_KEY,
       maxTokens: 500,
@@ -49,9 +49,10 @@ Original query: "${query}"
 
 Rewritten query:`;
 
-    const completion = await this.openai.complete({
-      prompt,
-    });
+    const completion = await this.openai.invoke([{
+      role: "user",
+      content: prompt,
+    }]);
 
     return completion.text.trim();
   }
@@ -80,9 +81,10 @@ Current Question: ${query}
 
 Answer:`;
 
-    const completion = await this.openai.complete({
-      prompt,
-    });
+    const completion = await this.openai.invoke([{
+      role: "user",
+      content: prompt,
+    }]);
 
     // Calculate confidence based on answer characteristics
     const answer = completion.text.trim();
