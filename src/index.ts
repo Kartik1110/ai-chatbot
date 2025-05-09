@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import express from "express";
 import indexRoutes from "./controller";
 import { QueryProcessor } from "./services/queryProcessor";
+import cors from "cors";
 
 dotenv.config();
 
@@ -11,7 +12,7 @@ const queryProcessor = new QueryProcessor();
 
 // Middleware
 app.use(express.json());
-
+app.use(cors());
 app.use("/", indexRoutes);
 
 // Initialize services before starting the server

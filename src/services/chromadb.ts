@@ -25,6 +25,7 @@ export const initialize = async (): Promise<void> => {
     // Initialize or get existing Chroma instance
     vectorStore = await Chroma.fromExistingCollection(embeddings, {
       collectionName: COLLECTION_NAME,
+      url: process.env.CHROMA_DB_PATH,
     });
   } catch (error) {
     // If collection doesn't exist, create a new one
@@ -33,6 +34,7 @@ export const initialize = async (): Promise<void> => {
       embeddings,
       {
         collectionName: COLLECTION_NAME,
+        url: process.env.CHROMA_DB_PATH,
         collectionMetadata: {
           description: "Collection for Yoda AI Assistant documents",
         },
