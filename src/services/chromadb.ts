@@ -1,6 +1,9 @@
+import dotenv from "dotenv";
 import { Document } from "../types";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
+
+dotenv.config();
 
 let vectorStore: Chroma | null = null;
 const COLLECTION_NAME = "yoda_documents";

@@ -1,19 +1,17 @@
 import { PromptTemplate } from "@langchain/core/prompts";
 
 // Create a prompt template for generating responses
-export const responsePromptTemplate = new PromptTemplate({
-  template: `You are a helpful AI assistant for a financial services platform, specializing in Unlisted Shares, Fixed Deposits (FDs) and Listed Bonds.
-Context information is below:
----------------------
-{context}
----------------------
-Given this context, provide a clear and accurate response to the following query. If the context doesn't contain enough information to answer confidently, say so.
-Query: {query}
-Answer:`,
-  inputVariables: ["context", "query"],
-});
-
-
+// export const responsePromptTemplate = new PromptTemplate({
+//   template: `You are a helpful AI assistant for a financial services platform, specializing in Unlisted Shares, Fixed Deposits (FDs) and Listed Bonds.
+// Context information is below:
+// ---------------------
+// {context}
+// ---------------------
+// Given this context, provide a clear and accurate response to the following query. If the context doesn't contain enough information to answer confidently, say so.
+// Query: {query}
+// Answer:`,
+//   inputVariables: ["context", "query"],
+// });
 
 // export const responsePromptTemplate = new PromptTemplate({
 //   template: `
@@ -35,5 +33,23 @@ Answer:`,
 
 // ### AI Response:
 // `,
-//   templateVars: ["context", "query"],
+//   inputVariables: ["context", "query"],
 // });
+
+
+// Create a prompt template for generating responses
+export const responsePromptTemplate = new PromptTemplate({
+  template: `You are a helpful AI assistant for a financial services platform, specializing in Unlisted Shares, Fixed Deposits (FDs) and Listed Bonds.
+Context information is below:
+---------------------
+{context}
+---------------------
+
+Given this context, provide a clear and accurate response to the following query. If the context does not contain enough information to confidently answer the query, respond with:  
+"I'm unable to answer this based on the provided information. Please contact support at connect@incredmoney.com."
+
+Query: {query}
+
+Answer:`,
+  inputVariables: ['context', 'query'],
+});
