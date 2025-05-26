@@ -8,59 +8,6 @@ const router = Router();
 const upload = multer({ dest: "uploads/" });
 const queryProcessor = new QueryProcessor();
 
-// Ensure uploads directory exists
-// (async () => {
-//   try {
-//     fs.mkdirSync("./uploads", { recursive: true });
-//   } catch (error) {
-//     console.error("Error creating uploads directory:", error);
-//   }
-// })();
-
-// router.post("/query", async (req: Request, res: Response) => {
-//   try {
-//     await initializeChromaDB();
-//     const { query } = req.body;
-
-//     if (!query || typeof query !== "string") {
-//       return res
-//         .status(400)
-//         .json({ error: "Query must be a non-empty string" });
-//     }
-
-//     // Generate embedding for the query text
-//     const queryEmbedding = await generateEmbedding(query, "question");
-//     const documents = await queryDocuments(queryEmbedding);
-//     const result = await processQuery(query, documents);
-
-//     res.json({
-//       answer: result.answer,
-//       confidence: result.confidence,
-//       sources: documents,
-//     });
-//   } catch (error) {
-//     console.error("Error querying documents:", error);
-//     res.status(500).json({ error: "Failed to query documents" });
-//   }
-// });
-
-// router.post("/generate-embedding", async (req: Request, res: Response) => {
-//   try {
-//     // Initialize ChromaDB first
-//     await initializeChromaDB();
-
-//     const filePath = "/home/kartik/code/chatbot/yoda-endgame/docs/NSE-FAQs.pdf";
-//     const text = fs.readFileSync(filePath);
-//     // clean up the pdf text to remove all the metadata and only keep the text
-//     const cleanedText = await pdf(text);
-//     const embedding = await generateEmbedding(cleanedText.text, "document");
-//     res.json(embedding);
-//   } catch (error) {
-//     console.error("Error generating embedding:", error);
-//     res.status(500).json({ error: "Failed to generate embedding" });
-//   }
-// });
-
 router.post(
   "/api/process-document",
   upload.single("file"),
